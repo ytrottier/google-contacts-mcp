@@ -46,6 +46,17 @@ By default the server only listens on `127.0.0.1`. To accept connections from ot
 
 With the server running, follow the instructions on [install-mcp](https://adamjones.me/install-mcp/?url=http://localhost:3000/mcp), which generates the right config for your MCP client (Claude Code, Claude Desktop, Cursor, Cline, VS Code, and more).
 
+### Alternative: stdio with a saved sign-in
+
+To let an MCP client launch the server directly over stdio, create an OAuth client of type **Desktop app** and sign in once:
+
+```bash
+npm run build
+GOOGLE_CLIENT_ID='your-client-id' GOOGLE_CLIENT_SECRET='your-client-secret' npm run auth
+```
+
+This opens your browser and saves a refresh token to `%APPDATA%\google-contacts-mcp\token.json` (Windows) or `~/.config/google-contacts-mcp/token.json` (elsewhere); override with `GOOGLE_CONTACTS_TOKEN_FILE`. Then configure your MCP client to run `node /path/to/dist/main.js` with the same `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env vars. Access tokens are refreshed automatically. If the sign-in is revoked, run `npm run auth` again.
+
 ## Architecture
 
 This server acts as an **OAuth proxy** to Google:

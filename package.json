@@ -16,6 +16,7 @@
   "scripts": {
     "start": "npm run build && node ./dist/main.js",
     "start:http": "npm run build && MCP_TRANSPORT=http node ./dist/main.js",
+    "auth": "node ./dist/main.js auth",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --watch",
     "lint": "eslint",
