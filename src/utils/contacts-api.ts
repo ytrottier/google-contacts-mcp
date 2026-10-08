@@ -2,6 +2,9 @@
 
 export const PEOPLE_API_BASE_URL = 'https://people.googleapis.com/v1';
 
+/** Returns a valid access token. forceRefresh asks for a new one, e.g. after the API rejected the previous one. */
+export type TokenProvider = (options?: {forceRefresh?: boolean}) => Promise<string>;
+
 // Common helper to create base headers
 function createBaseHeaders(accessToken: string): Record<string, string> {
 	return {
@@ -45,25 +48,39 @@ async function parseResponse(response: Response): Promise<unknown> {
 export async function makePeopleApiCall(
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
 	endpoint: string,
-	accessToken: string,
+	accessToken: string | TokenProvider,
 	body?: unknown,
 ) {
 	const url = `${PEOPLE_API_BASE_URL}${endpoint}`;
-	const headers = createBaseHeaders(accessToken);
 
-	if (body) {
-		headers['Content-Type'] = 'application/json';
-	}
+	const send = async (token: string) => {
+		const headers = createBaseHeaders(token);
 
-	const fetchOptions: RequestInit = {
-		method,
-		headers,
+		if (body) {
+			headers['Content-Type'] = 'application/json';
+		}
+
+		const fetchOptions: RequestInit = {
+			method,
+			headers,
+		};
+
+		if (body) {
+			fetchOptions.body = JSON.stringify(body);
+		}
+
+		return fetch(url, fetchOptions);
 	};
 
-	if (body) {
-		fetchOptions.body = JSON.stringify(body);
+	if (typeof accessToken === 'string') {
+		return parseResponse(await send(accessToken));
 	}
 
-	const response = await fetch(url, fetchOptions);
+	let response = await send(await accessToken());
+	if (response.status === 401) {
+		// The access token may have been revoked or expired early: refresh it and retry once
+		response = await send(await accessToken({forceRefresh: true}));
+	}
+
 	return parseResponse(response);
 }

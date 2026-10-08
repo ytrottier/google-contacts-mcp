@@ -7,6 +7,9 @@ import type {
 	OAuthMetadata, OAuthProtectedResourceMetadata, OAuthClientInformationFull, OAuthClientMetadata,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import {isTokenValid} from './utils/token-cache.js';
+import type {Config} from './index.js';
+import {createRefreshTokenProvider, getTokenFilePath, readStoredToken} from './auth/refresh-token.js';
+import {login} from './auth/login.js';
 
 // Google OAuth configuration - users must provide their own credentials
 const {GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET} = process.env;
@@ -42,16 +45,49 @@ function extractBearerToken(req: Request): string | undefined {
 const transport = process.env.MCP_TRANSPORT || 'stdio';
 
 (async () => {
+	if (process.argv[2] === 'auth') {
+		if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+			console.error('google-contacts-mcp: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (from a Desktop app OAuth client) are required to sign in');
+
+			process.exit(1);
+		}
+
+		try {
+			await login({
+				clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, scopes: CONTACTS_SCOPES, tokenFile: getTokenFilePath(),
+			});
+		} catch (error) {
+			console.error(`google-contacts-mcp: ${error instanceof Error ? error.message : String(error)}`);
+
+			process.exit(1);
+		}
+
+		return;
+	}
+
 	if (transport === 'stdio') {
-		const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
-		if (!accessToken) {
-			console.error('google-contacts-mcp: GOOGLE_ACCESS_TOKEN required for stdio transport');
+		let token: Config['token'] | undefined = process.env.GOOGLE_ACCESS_TOKEN;
+
+		if (!token && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+			const tokenFile = getTokenFilePath();
+			if (!readStoredToken(tokenFile)) {
+				console.error(`google-contacts-mcp: no saved Google sign-in at ${tokenFile}`);
+				console.error('Sign in once with `npm run auth` (or `node dist/main.js auth`) using the same GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET');
+
+				process.exit(1);
+			}
+
+			token = createRefreshTokenProvider({clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, tokenFile});
+		}
+
+		if (!token) {
+			console.error('google-contacts-mcp: stdio transport needs GOOGLE_ACCESS_TOKEN, or GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET plus a saved sign-in (run `npm run auth`)');
 			console.error('For OAuth support, use HTTP transport: MCP_TRANSPORT=http');
 
 			process.exit(1);
 		}
 
-		const server = createServer({token: accessToken});
+		const server = createServer({token});
 		setupSignalHandlers(async () => server.close());
 
 		const stdioTransport = new StdioServerTransport();
