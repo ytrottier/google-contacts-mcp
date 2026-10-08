@@ -75,6 +75,7 @@ The server holds no tokens or state - it just proxies OAuth to Google.
 | `contact_delete` | Permanently delete a contact |
 | `contact_photo_update` | Set or replace a contact's photo |
 | `contact_photo_delete` | Remove a contact's photo |
+| `contact_photo_update_from_file` | Set a contact's photo from a JPEG/PNG file in `PHOTO_DIR` (only available when `PHOTO_DIR` is set) |
 | `contact_groups_list` | List contact groups (labels) |
 | `contact_group_get` | Get a contact group, including its members |
 | `contact_group_create` | Create a new contact group |
