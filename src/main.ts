@@ -17,6 +17,7 @@ const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const CONTACTS_SCOPES = [
 	'https://www.googleapis.com/auth/contacts',
 	'https://www.googleapis.com/auth/directory.readonly',
+	'https://www.googleapis.com/auth/contacts.other.readonly',
 ];
 
 function setupSignalHandlers(cleanup: () => Promise<void>): void {
