@@ -99,6 +99,8 @@ The server holds no tokens or state - it just proxies OAuth to Google.
 | `other_contacts_search` | Search "other contacts" by name, email, or phone |
 | `other_contact_copy_to_contacts` | Save an "other contact" as a regular contact |
 
+The People API has no trash. Set `DISABLE_DELETE_TOOLS=1` to leave out `contact_delete`, `contact_photo_delete`, and `contact_group_delete`.
+
 ## Contributing
 
 Pull requests are welcomed on GitHub! To get started:
