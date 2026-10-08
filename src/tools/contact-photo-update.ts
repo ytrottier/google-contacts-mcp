@@ -10,7 +10,7 @@ const inputSchema = strictSchemaWithAliases({
 	photoBytes: z.string().describe('The photo to set, as base64-encoded JPEG or PNG image bytes'),
 }, {});
 
-const outputSchema = z.object({
+export const outputSchema = z.object({
 	person: z.object({
 		resourceName: z.string().optional(),
 		etag: z.string().optional(),
