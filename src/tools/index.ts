@@ -25,14 +25,18 @@ export function registerAll(server: McpServer, config: Config): void {
 	registerContactSearch(server, config);
 	registerContactCreate(server, config);
 	registerContactUpdate(server, config);
-	registerContactDelete(server, config);
 	registerContactPhotoUpdate(server, config);
-	registerContactPhotoDelete(server, config);
 	registerDirectorySearch(server, config);
 	registerContactGroupsList(server, config);
 	registerContactGroupGet(server, config);
 	registerContactGroupCreate(server, config);
 	registerContactGroupUpdate(server, config);
-	registerContactGroupDelete(server, config);
 	registerContactGroupMembersModify(server, config);
+
+	// The People API has no trash, so allow running without the tools that permanently delete data
+	if (!['1', 'true'].includes(process.env.DISABLE_DELETE_TOOLS?.toLowerCase() ?? '')) {
+		registerContactDelete(server, config);
+		registerContactPhotoDelete(server, config);
+		registerContactGroupDelete(server, config);
+	}
 }

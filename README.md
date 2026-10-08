@@ -82,6 +82,8 @@ The server holds no tokens or state - it just proxies OAuth to Google.
 | `contact_group_delete` | Permanently delete a contact group |
 | `contact_group_members_modify` | Add or remove contacts from a contact group |
 
+The People API has no trash. Set `DISABLE_DELETE_TOOLS=1` to leave out `contact_delete`, `contact_photo_delete`, and `contact_group_delete`.
+
 ## Contributing
 
 Pull requests are welcomed on GitHub! To get started:
