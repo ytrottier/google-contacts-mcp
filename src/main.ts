@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 import express, {type Request, type Response} from 'express';
 import {createServer} from './index.js';
 import type {
@@ -225,11 +226,12 @@ const transport = process.env.MCP_TRANSPORT || 'stdio';
 			const server = createServer({token: token ?? ''});
 
 			try {
+				// No sessionIdGenerator: stateless mode
 				const httpTransport = new StreamableHTTPServerTransport({
-					sessionIdGenerator: undefined,
 					enableJsonResponse: true,
 				});
-				await server.connect(httpTransport);
+				// The SDK's transport class declares optional callbacks as `| undefined`, which exactOptionalPropertyTypes rejects
+				await server.connect(httpTransport as Transport);
 				await httpTransport.handleRequest(req, res, req.body);
 
 				res.on('close', () => {
