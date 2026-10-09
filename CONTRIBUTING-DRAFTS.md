@@ -30,10 +30,11 @@ To open a PR from the fork: on GitHub, go to `ytrottier/google-contacts-mcp`, op
 
 **Change**
 
-When any of `givenName`, `familyName`, `organization` or `jobTitle` is given, the tool first fetches the contact (`personFields=names,organizations`). It then merges the supplied values into the current data:
+When any of `givenName`, `familyName`, `organization` or `jobTitle` is given, the tool first fetches the contact (`personFields=names,organizations&sources=READ_SOURCE_TYPE_CONTACT`). It then merges the supplied values into the current data:
 
 - **Names:** the supplied values go over the existing name. Structured sub-fields such as `middleName` and `honorificPrefix` are kept. The derived fields (`displayName`, `displayNameLastFirst`, `unstructuredName`) and `metadata` are not sent back.
 - **Organizations:** the supplied values go over the primary organization, or the first one if none is primary. Its other sub-fields and all other organizations are kept. If the contact has no organization, one is added.
+- **Contact data only:** `people.get` returns profile and contact sources by default. For a contact linked to a Google or Workspace profile, that would let the merge copy profile names and organizations into the contact. The GET therefore asks for `READ_SOURCE_TYPE_CONTACT` only, and any entry whose `metadata.source.type` is something other than `CONTACT` is ignored as well. Only the contact's own entries are merged and written back.
 
 The PATCH still sends the **caller's** etag, so Google still rejects writes based on stale data. That rejection (400 `FAILED_PRECONDITION`) is now reported as "Contact … changed since you read it … re-read it with contact_get and retry". I chose not to compare etags locally, because the etag from `contact_search`/`contacts_list` may not match one fetched with a different field mask. Google's own check covers this case anyway.
 
@@ -47,6 +48,7 @@ Updates that don't touch names or organizations behave exactly as before, with n
 - a given-name-only update keeps the middle and family names
 - a second organization survives
 - an organization is created when there is none
+- only CONTACT-source organizations and names are written back; PROFILE-source ones from a linked profile are left out
 - email-only updates make no extra GET
 - a stale etag produces the clear error
 
