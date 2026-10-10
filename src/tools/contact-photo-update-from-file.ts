@@ -65,7 +65,7 @@ export function registerContactPhotoUpdateFromFile(server: McpServer, config: Co
 		'contact_photo_update_from_file',
 		{
 			title: 'Update contact photo from file',
-			description: `Set (or replace) the photo for a contact from a JPEG or PNG file (max 5 MB) in the photo folder (${photoDir}). Prefer this over contact_photo_update when the image is saved on disk.`,
+			description: `Set (or replace) the photo for a contact from a JPEG or PNG file (max 5 MB) in the photo folder (${photoDir}). Prefer this over contact_photo_update when the image is saved on disk. Returns the updated contact with its new photo URL and etag.`,
 			inputSchema,
 			outputSchema,
 			annotations: {
@@ -76,7 +76,11 @@ export function registerContactPhotoUpdateFromFile(server: McpServer, config: Co
 		},
 		async ({resourceName, path}) => {
 			const bytes = await readPhotoFromDir(photoDir, path);
-			const result = await makePeopleApiCall('PATCH', `/${resourceName}:updateContactPhoto`, config.token, {photoBytes: bytes.toString('base64')});
+			const result = await makePeopleApiCall('PATCH', `/${resourceName}:updateContactPhoto`, config.token, {
+				photoBytes: bytes.toString('base64'),
+				// Without personFields, Google returns an empty response
+				personFields: 'photos',
+			});
 			return jsonResult(outputSchema.parse(result));
 		},
 	);
