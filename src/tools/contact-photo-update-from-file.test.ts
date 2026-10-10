@@ -61,7 +61,8 @@ describe('contact_photo_update_from_file', () => {
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('https://people.googleapis.com/v1/people/c1:updateContactPhoto');
 		expect(init.method).toBe('PATCH');
-		expect(JSON.parse(init.body as string)).toEqual({photoBytes: PNG.toString('base64')});
+		expect(JSON.parse(init.body as string)).toEqual({photoBytes: PNG.toString('base64'), personFields: 'photos'});
+		expect(result.structuredContent).toEqual({person: {resourceName: 'people/c1', etag: 'etag-2'}});
 	});
 
 	it('accepts a JPEG by absolute path inside the folder, whatever its extension', async () => {
@@ -70,7 +71,7 @@ describe('contact_photo_update_from_file', () => {
 		const result = await callTool(join(photoDir, 'portrait.bin'));
 
 		expect(result.isError).toBeFalsy();
-		expect(JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string)).toEqual({photoBytes: JPEG.toString('base64')});
+		expect(JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string)).toEqual({photoBytes: JPEG.toString('base64'), personFields: 'photos'});
 	});
 
 	it('rejects path traversal out of the folder', async () => {
