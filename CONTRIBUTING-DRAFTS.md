@@ -36,7 +36,7 @@ When any of `givenName`, `familyName`, `organization` or `jobTitle` is given, th
 - **Organizations:** the supplied values go over the primary organization, or the first one if none is primary. Its other sub-fields and all other organizations are kept. If the contact has no organization, one is added.
 - **Contact data only:** `people.get` returns profile and contact sources by default. For a contact linked to a Google or Workspace profile, that would let the merge copy profile names and organizations into the contact. The GET therefore asks for `READ_SOURCE_TYPE_CONTACT` only, and any entry whose `metadata.source.type` is something other than `CONTACT` is ignored as well. Only the contact's own entries are merged and written back.
 
-The PATCH still sends the **caller's** etag, so Google still rejects writes based on stale data. That rejection (400 `FAILED_PRECONDITION`) is now reported as "Contact … changed since you read it … re-read it with contact_get and retry". I chose not to compare etags locally, because the etag from `contact_search`/`contacts_list` may not match one fetched with a different field mask. Google's own check covers this case anyway.
+The PATCH still sends the **caller's** etag, so Google still rejects writes based on stale data. That rejection (400 `FAILED_PRECONDITION`) is now reported as "Contact … changed since you read it … re-read it with contact_get and retry". I chose not to compare etags locally. In a live test, the etag from `contacts_list` differed from the one returned by `contact_create`/`contact_update` (the prefix appears to encode the requested field mask). But Google accepted the `contacts_list` etag for an update, and rejected an out-of-date one with 400 `FAILED_PRECONDITION`. So a local comparison would refuse valid updates, while Google’s own check already covers stale data.
 
 Updates that don't touch names or organizations behave exactly as before, with no extra request.
 
@@ -51,6 +51,8 @@ Updates that don't touch names or organizations behave exactly as before, with n
 - only CONTACT-source organizations and names are written back; PROFILE-source ones from a linked profile are left out
 - email-only updates make no extra GET
 - a stale etag produces the clear error
+
+Also tested live: a title-only update kept the company, a given-name-only update kept the family name, and a stale etag returned the new clear error.
 
 `npm run lint && npm run build && npm test` pass.
 
