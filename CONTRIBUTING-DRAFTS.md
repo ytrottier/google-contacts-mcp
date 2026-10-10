@@ -95,6 +95,8 @@ This adds `personFields: 'photos'` to the request body (a field of `UpdateContac
 
 Tests: `src/tools/contact-photo-update.test.ts` (stubbed `fetch`) checks the URL, the method and the exact body `{photoBytes, personFields: 'photos'}`, and that the returned `person` is passed through. `npm run lint && npm run build && npm test` pass.
 
+Also tested live: after this change, `contact_photo_update` returns the updated contact with its new photo URL instead of `{}`.
+
 This change was prepared with Claude's help and reviewed by me.
 
 ---
