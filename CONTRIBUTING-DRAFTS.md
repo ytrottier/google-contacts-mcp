@@ -6,9 +6,10 @@ Texts ready to paste for Adam Jones's repo. Every branch is cut from upstream `m
 
 1. PR: partial name/organization updates (section 1): `fix/partial-name-org-update`
 2. PR: bind HTTP server to localhost (section 2): `fix/bind-localhost`
-3. PR: "other contacts" tools (section 3): `feat/other-contacts`
-4. Optional PR: dependency update (section 4): `chore/npm-audit-fix`
-5. Issue first, then PRs only if Adam wants them (section 5): stdio refresh token, photo from file, disable delete tools
+3. PR: return the updated contact from photo updates (section 3): `fix/photo-update-response`
+4. PR: "other contacts" tools (section 4): `feat/other-contacts`
+5. Optional PR: dependency update (section 5): `chore/npm-audit-fix`
+6. Issue first, then PRs only if Adam wants them (section 6): stdio refresh token, photo from file, disable delete tools
 
 To open a PR from the fork: on GitHub, go to `ytrottier/google-contacts-mcp`, open the branch, click *Contribute → Open pull request* with base `domdomegg/google-contacts-mcp:master`, then paste the title and body below.
 
@@ -80,7 +81,25 @@ This change was prepared with Claude's help and reviewed by me.
 
 ---
 
-## 3. PR: Add tools for "other contacts"
+## 3. PR: Return the updated contact from `contact_photo_update`
+
+**Branch:** `fix/photo-update-response`
+
+**Title:** Return the updated contact from contact_photo_update
+
+**Body:**
+
+In a live test, `contact_photo_update` returned `{}`. The photo was set, but the tool gave no confirmation. `updateContactPhoto` only returns the person when the request names the fields to return.
+
+This adds `personFields: 'photos'` to the request body (a field of `UpdateContactPhotoRequest`). Google then returns `{person: {resourceName, etag, photos}}`, which the existing `outputSchema` already describes. The caller gets the new photo URL and the new etag, which it needs for any follow-up `contact_update`. The tool description now says so.
+
+Tests: `src/tools/contact-photo-update.test.ts` (stubbed `fetch`) checks the URL, the method and the exact body `{photoBytes, personFields: 'photos'}`, and that the returned `person` is passed through. `npm run lint && npm run build && npm test` pass.
+
+This change was prepared with Claude's help and reviewed by me.
+
+---
+
+## 4. PR: Add tools for "other contacts"
 
 **Branch:** `feat/other-contacts`
 
@@ -108,7 +127,7 @@ This change was prepared with Claude's help and reviewed by me.
 
 ---
 
-## 4. Optional PR: Update vulnerable dependencies
+## 5. Optional PR: Update vulnerable dependencies
 
 **Branch:** `chore/npm-audit-fix`
 
@@ -137,7 +156,7 @@ This change was prepared with Claude's help and reviewed by me.
 
 ---
 
-## 5. Issue (ask first): stdio without a raw access token, photo from file, and turning off delete tools
+## 6. Issue (ask first): stdio without a raw access token, photo from file, and turning off delete tools
 
 **Title:** Would you accept: stdio mode with a saved refresh token, photo upload from a local file, and an option to disable delete tools?
 
