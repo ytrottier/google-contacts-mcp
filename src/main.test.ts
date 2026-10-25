@@ -6,7 +6,7 @@ const listen = vi.fn(() => ({on: vi.fn()}));
 
 vi.mock('express', () => {
 	const app = {
-		use: vi.fn(), get: vi.fn(), post: vi.fn(), listen,
+		use: vi.fn(), get: vi.fn(), post: vi.fn(), all: vi.fn(), listen,
 	};
 	const express = Object.assign(() => app, {json: vi.fn(), urlencoded: vi.fn()});
 	return {default: express};
