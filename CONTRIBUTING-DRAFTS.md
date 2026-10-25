@@ -1,6 +1,6 @@
 # Upstream contribution drafts (domdomegg/google-contacts-mcp)
 
-Texts ready to paste for Adam Jones's repo. Every branch is cut from upstream `master` at `80591d6` (v1.3.0), which upstream `master` was still at on 2026-10-08. Each one stands alone.
+Texts ready to paste for Adam Jones's repo. Every PR branch is rebased onto upstream `master` at `5c0a2af` (v1.3.1 plus Dependabot's SDK 1.32.0 bump), which upstream `master` was at on 2026-10-25. Each one stands alone.
 
 **Submission order**
 
@@ -133,26 +133,23 @@ This change was prepared with Claude's help and reviewed by me.
 
 **Branch:** `chore/npm-audit-fix`
 
-Send this only if Dependabot still hasn't updated these when you submit. On 2026-10-08 upstream `master` had no open Dependabot branch for them. The SDK bump also needs a small type fix (below), which may be why it hasn't gone through on its own.
+Send this only if Dependabot still hasn't updated these when you submit. On 2026-10-25 upstream had already taken the SDK, `proxy-addr` and older `fast-uri` bumps, but not these.
 
-**Title:** Update @modelcontextprotocol/sdk, proxy-addr and fast-uri (npm audit)
+**Title:** Update body-parser and fast-uri (npm audit)
 
 **Body:**
 
 `npm audit --omit=dev` at `master` reports:
 
-- `@modelcontextprotocol/sdk` < 1.30.2: GHSA-345p-7cg4-v4c7, GHSA-8r9q-7v3j-jr4g, GHSA-6qxp-vccf-f47h
-- `proxy-addr` ≤ 2.0.7: GHSA-jqcg-44mw-7w3h
-- `fast-uri` ≤ 3.1.7: GHSA-hrr3-gc8f-f4qj
+- `body-parser` 2.0.0–2.3.0: GHSA-27r3-jxmh-p828
+- `fast-uri` ≤ 3.1.8: GHSA-w74x-v6f9-j3xg, GHSA-xhq7-xmqj-769h, GHSA-wjr9-j795-jxcr, GHSA-333x-w4r6-6crp
+- `zod` < 4.6.6: GHSA-mrhx-c7xc-m3w5
 
-This is `npm audit fix`, a lockfile-only change: the SDK goes 1.24.3 → 1.32.1, `proxy-addr` to 2.0.8, `fast-uri` to 3.1.8. After it, `npm audit --omit=dev` reports 0 vulnerabilities.
+This is `npm audit fix`, a lockfile-only change: `body-parser` goes to 2.4.0 and `fast-uri` to 3.1.9 (plus their small transitive bumps). I ran it with npm 11 so the lockfile format matches yours.
 
-SDK 1.32 no longer type-checks under `exactOptionalPropertyTypes` in `src/main.ts`, so this also:
+The `zod` advisory is left out on purpose. Fixing it means moving to zod 4, a breaking change that deserves its own PR.
 
-- drops the explicit `sessionIdGenerator: undefined`. Omitting it gives the same stateless mode.
-- casts the transport passed to `server.connect` to `Transport`, because the SDK class declares its optional callbacks as `| undefined`.
-
-I checked that stdio and HTTP `tools/list` still work. `npm run lint && npm run build && npm test` pass.
+`npm run lint && npm run build && npm test` pass.
 
 This change was prepared with Claude's help and reviewed by me.
 
