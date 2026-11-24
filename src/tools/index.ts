@@ -10,6 +10,8 @@ import {registerContactDelete} from './contact-delete.js';
 import {registerContactPhotoUpdate} from './contact-photo-update.js';
 import {registerContactPhotoDelete} from './contact-photo-delete.js';
 import {registerContactPhotoUpdateFromFile} from './contact-photo-update-from-file.js';
+import {registerContactPhotoUpdateFromDrive} from './contact-photo-update-from-drive.js';
+import {isDrivePhotosEnabled} from '../utils/drive-api.js';
 import {registerDirectorySearch} from './directory-search.js';
 import {registerContactGroupsList} from './contact-groups-list.js';
 import {registerContactGroupGet} from './contact-group-get.js';
@@ -45,6 +47,11 @@ export function registerAll(server: McpServer, config: Config): void {
 	const photoRoot = process.env.PHOTO_ROOT || process.env.PHOTO_DIR;
 	if (photoRoot) {
 		registerContactPhotoUpdateFromFile(server, config, photoRoot);
+	}
+
+	// Optional, and off by default because it needs read access to the user's Google Drive
+	if (isDrivePhotosEnabled()) {
+		registerContactPhotoUpdateFromDrive(server, config);
 	}
 
 	// The People API has no trash, so allow running without the tools that permanently delete data
