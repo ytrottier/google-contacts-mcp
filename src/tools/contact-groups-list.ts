@@ -17,7 +17,7 @@ const groupSchema = z.object({
 	formattedName: z.string().optional(),
 	groupType: z.string().optional(),
 	memberCount: z.number().optional(),
-}).passthrough();
+}).loose();
 
 const outputSchema = z.object({
 	contactGroups: z.array(groupSchema).optional(),

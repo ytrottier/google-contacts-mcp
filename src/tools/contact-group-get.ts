@@ -18,7 +18,7 @@ const outputSchema = z.object({
 	groupType: z.string().optional(),
 	memberCount: z.number().optional(),
 	memberResourceNames: z.array(z.string()).optional(),
-}).passthrough();
+}).loose();
 
 export function registerContactGroupGet(server: McpServer, config: Config): void {
 	server.registerTool(

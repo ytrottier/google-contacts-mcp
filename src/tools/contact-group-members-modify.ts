@@ -13,7 +13,7 @@ const inputSchema = strictSchemaWithAliases({
 
 const outputSchema = z.object({
 	notFoundResourceNames: z.array(z.string()).optional(),
-}).passthrough();
+}).loose();
 
 export function registerContactGroupMembersModify(server: McpServer, config: Config): void {
 	server.registerTool(

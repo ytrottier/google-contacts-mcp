@@ -91,7 +91,7 @@ const personSchema = z.object({
 		key: z.string().optional(),
 		value: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 const outputSchema = z.object({
 	results: z.array(z.object({

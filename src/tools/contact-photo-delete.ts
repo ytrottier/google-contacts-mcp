@@ -17,8 +17,8 @@ const outputSchema = z.object({
 			url: z.string().optional(),
 			default: z.boolean().optional(),
 		})).optional(),
-	}).passthrough().optional(),
-}).passthrough();
+	}).loose().optional(),
+}).loose();
 
 export function registerContactPhotoDelete(server: McpServer, config: Config): void {
 	server.registerTool(

@@ -26,7 +26,7 @@ const personSchema = z.object({
 		value: z.string().optional(),
 		type: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 const outputSchema = z.object({
 	otherContacts: z.array(personSchema).optional(),

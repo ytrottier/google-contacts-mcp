@@ -100,7 +100,7 @@ const outputSchema = z.object({
 		key: z.string().optional(),
 		value: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 export function registerContactGet(server: McpServer, config: Config): void {
 	server.registerTool(
