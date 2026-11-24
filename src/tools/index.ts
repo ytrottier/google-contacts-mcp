@@ -41,8 +41,10 @@ export function registerAll(server: McpServer, config: Config): void {
 	registerOtherContactCopyToContacts(server, config);
 
 	// Optional: lets clients pass a file path instead of base64 bytes for photos
-	if (process.env.PHOTO_DIR) {
-		registerContactPhotoUpdateFromFile(server, config, process.env.PHOTO_DIR);
+	// PHOTO_DIR is the earlier name of PHOTO_ROOT
+	const photoRoot = process.env.PHOTO_ROOT || process.env.PHOTO_DIR;
+	if (photoRoot) {
+		registerContactPhotoUpdateFromFile(server, config, photoRoot);
 	}
 
 	// The People API has no trash, so allow running without the tools that permanently delete data

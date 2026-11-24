@@ -10,32 +10,57 @@ import {jsonResult} from '../utils/response.js';
 import {strictSchemaWithAliases} from '../utils/schema.js';
 import {outputSchema} from './contact-photo-update.js';
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 const inputSchema = strictSchemaWithAliases({
 	resourceName: z.string().describe('The resource name of the contact (e.g., "people/c12345")'),
-	path: z.string().describe('Path of a JPEG or PNG file inside the photo folder, relative to it (e.g. "jane-doe.jpg") or absolute'),
+	folder: z.string().describe('The subfolder of the user\'s photo folder that holds the photo, as the user named it (e.g. "Headshots"); "." for the photo folder itself. If the user did not say which folder, ask them rather than guessing.'),
+	fileName: z.string().describe('The photo\'s file name inside that folder (e.g. "jane-doe.jpg")'),
 }, {});
 
-function isJpegOrPng(bytes: Buffer): boolean {
+export function isJpegOrPng(bytes: Buffer): boolean {
 	const isJpeg = bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
 	const isPng = bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));
 	return isJpeg || isPng;
 }
 
-/** Reads a photo, refusing anything that does not resolve (after following symlinks) to a file inside photoDir */
-export async function readPhotoFromDir(photoDir: string, path: string): Promise<Buffer> {
-	const dir = await realpath(photoDir);
+function isInside(dir: string, target: string): boolean {
+	const relativePath = relative(dir, target);
+	return relativePath !== '..' && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath);
+}
+
+/** Reads a photo from a subfolder of photoRoot, refusing anything that does not resolve (after following symlinks) to a file inside photoRoot */
+export async function readPhotoFromRoot(photoRoot: string, folder: string, fileName: string): Promise<Buffer> {
+	const path = `${folder}/${fileName}`;
+	if (!fileName || fileName === '.' || fileName === '..' || /[/\\]/.test(fileName)) {
+		throw new Error(`File name must be a plain file name, without folders: ${fileName}`);
+	}
+
+	if (isAbsolute(folder)) {
+		throw new Error(`Folder must be a subfolder of the photo folder, not a full path: ${folder}`);
+	}
+
+	const root = await realpath(photoRoot);
+	let dir: string;
 	let target: string;
 	try {
-		target = await realpath(resolve(dir, path));
+		dir = await realpath(resolve(root, folder));
+	} catch {
+		throw new Error(`Folder not found in the photo folder: ${folder}`);
+	}
+
+	if (!isInside(root, dir)) {
+		throw new Error(`Folder must be inside the photo folder (${root}): ${folder}`);
+	}
+
+	try {
+		target = await realpath(resolve(dir, fileName));
 	} catch {
 		throw new Error(`Photo not found: ${path}`);
 	}
 
-	const relativePath = relative(dir, target);
-	if (!relativePath || relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
-		throw new Error(`Photo must be inside the photo folder (${dir}): ${path}`);
+	if (target === root || !isInside(root, target)) {
+		throw new Error(`Photo must be inside the photo folder (${root}): ${path}`);
 	}
 
 	const file = await open(target, 'r');
@@ -60,12 +85,12 @@ export async function readPhotoFromDir(photoDir: string, path: string): Promise<
 	}
 }
 
-export function registerContactPhotoUpdateFromFile(server: McpServer, config: Config, photoDir: string): void {
+export function registerContactPhotoUpdateFromFile(server: McpServer, config: Config, photoRoot: string): void {
 	server.registerTool(
 		'contact_photo_update_from_file',
 		{
 			title: 'Update contact photo from file',
-			description: `Set (or replace) the photo for a contact from a JPEG or PNG file (max 5 MB) in the photo folder (${photoDir}). Prefer this over contact_photo_update when the image is saved on disk. Returns the updated contact with its new photo URL and etag.`,
+			description: `Set (or replace) the photo for a contact from a JPEG or PNG file (max 5 MB) in a subfolder, named by the user, of the photo folder (${photoRoot}). Prefer this over contact_photo_update when the image is saved on disk. Returns the updated contact with its new photo URL and etag.`,
 			inputSchema,
 			outputSchema,
 			annotations: {
@@ -74,8 +99,8 @@ export function registerContactPhotoUpdateFromFile(server: McpServer, config: Co
 				idempotentHint: true,
 			},
 		},
-		async ({resourceName, path}) => {
-			const bytes = await readPhotoFromDir(photoDir, path);
+		async ({resourceName, folder, fileName}) => {
+			const bytes = await readPhotoFromRoot(photoRoot, folder, fileName);
 			const result = await makePeopleApiCall('PATCH', `/${resourceName}:updateContactPhoto`, config.token, {
 				photoBytes: bytes.toString('base64'),
 				// Without personFields, Google returns an empty response
