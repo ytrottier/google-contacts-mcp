@@ -41,4 +41,35 @@ describe('HTTP transport', () => {
 			expect(listen).toHaveBeenCalledWith(4321, '0.0.0.0', expect.any(Function));
 		});
 	});
+
+	async function advertisedScopes(): Promise<string[]> {
+		await import('./main.js');
+		const express = (await import('express')).default as unknown as () => {get: ReturnType<typeof vi.fn>};
+		const app = express();
+		await vi.waitFor(() => {
+			expect(listen).toHaveBeenCalled();
+		});
+		const route = app.get.mock.calls.findLast(([path]) => path === '/.well-known/oauth-authorization-server') as [string, (req: unknown, res: {json: (body: {scopes_supported: string[]}) => void}) => void];
+		let scopes: string[] = [];
+		route[1]({}, {
+			json(body) {
+				scopes = body.scopes_supported;
+			},
+		});
+		return scopes;
+	}
+
+	it('does not ask for Google Drive access by default', async () => {
+		vi.stubEnv('ENABLE_DRIVE_PHOTOS', '');
+		expect(await advertisedScopes()).toEqual([
+			'https://www.googleapis.com/auth/contacts',
+			'https://www.googleapis.com/auth/directory.readonly',
+			'https://www.googleapis.com/auth/contacts.other.readonly',
+		]);
+	});
+
+	it('asks for read-only Google Drive access when Drive photos are enabled', async () => {
+		vi.stubEnv('ENABLE_DRIVE_PHOTOS', '1');
+		expect(await advertisedScopes()).toContain('https://www.googleapis.com/auth/drive.readonly');
+	});
 });

@@ -11,6 +11,7 @@ import {isTokenValid} from './utils/token-cache.js';
 import type {Config} from './index.js';
 import {createRefreshTokenProvider, getTokenFilePath, readStoredToken} from './auth/refresh-token.js';
 import {login} from './auth/login.js';
+import {DRIVE_READONLY_SCOPE, isDrivePhotosEnabled} from './utils/drive-api.js';
 import {
 	buildClientRedirect, checkRedirectUri, parseAllowedRedirectUris, renderConsentPage,
 } from './utils/oauth-redirect.js';
@@ -25,6 +26,8 @@ const CONTACTS_SCOPES = [
 	'https://www.googleapis.com/auth/contacts',
 	'https://www.googleapis.com/auth/directory.readonly',
 	'https://www.googleapis.com/auth/contacts.other.readonly',
+	// Only asked for when Drive photos are enabled
+	...(isDrivePhotosEnabled() ? [DRIVE_READONLY_SCOPE] : []),
 ];
 
 function setupSignalHandlers(cleanup: () => Promise<void>): void {
