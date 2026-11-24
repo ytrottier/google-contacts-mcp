@@ -43,7 +43,11 @@ function tokenCacheGet(token: string): number | undefined {
 	return expiresAt;
 }
 
-export async function isTokenValid(token: string): Promise<boolean> {
+/**
+ * Whether a Google access token is valid. With expectedClientId, the token must also have been issued to that
+ * OAuth client, so tokens obtained by other apps are refused.
+ */
+export async function isTokenValid(token: string, expectedClientId?: string): Promise<boolean> {
 	const cachedExpiresAt = tokenCacheGet(token);
 	if (cachedExpiresAt !== undefined) {
 		// Cache hit - check if token is still valid
@@ -59,8 +63,14 @@ export async function isTokenValid(token: string): Promise<boolean> {
 			return false;
 		}
 
-		const data = await response.json() as {expires_in?: number};
-		const expiresIn = data.expires_in ?? 0;
+		const data = await response.json() as {expires_in?: number | string; aud?: string; azp?: string};
+		if (expectedClientId && data.aud !== expectedClientId && data.azp !== expectedClientId) {
+			// Valid, but issued to a different app - cache as expired so we don't keep hitting tokeninfo
+			tokenCacheSet(token, Date.now() - TOKEN_CACHE_EXPIRED_BUFFER_MS);
+			return false;
+		}
+
+		const expiresIn = Number(data.expires_in ?? 0);
 		const expiresAt = Date.now() + (expiresIn * 1000);
 		tokenCacheSet(token, expiresAt);
 		return expiresAt > Date.now();

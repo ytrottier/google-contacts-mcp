@@ -281,7 +281,7 @@ const transport = process.env.MCP_TRANSPORT || 'stdio';
 			}
 
 			// Validate token before processing
-			if (token && !await isTokenValid(token)) {
+			if (token && !await isTokenValid(token, GOOGLE_CLIENT_ID)) {
 				res.status(401).json({
 					jsonrpc: '2.0',
 					error: {code: -32001, message: 'Unauthorized: Invalid or expired token'},
