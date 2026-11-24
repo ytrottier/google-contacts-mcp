@@ -35,7 +35,7 @@ const personSchema = z.object({
 	photos: z.array(z.object({
 		url: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 const outputSchema = z.object({
 	people: z.array(personSchema).optional(),

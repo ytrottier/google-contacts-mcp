@@ -153,7 +153,7 @@ const outputSchema = z.object({
 		key: z.string().optional(),
 		value: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 type ApiEntry = Record<string, unknown> & {metadata?: {primary?: boolean; source?: {type?: string}}};
 

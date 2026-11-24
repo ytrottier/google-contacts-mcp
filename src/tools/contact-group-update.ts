@@ -18,7 +18,7 @@ const outputSchema = z.object({
 	formattedName: z.string().optional(),
 	groupType: z.string().optional(),
 	memberCount: z.number().optional(),
-}).passthrough();
+}).loose();
 
 export function registerContactGroupUpdate(server: McpServer, config: Config): void {
 	server.registerTool(

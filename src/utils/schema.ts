@@ -1,41 +1,20 @@
-import {z, type ZodRawShape, type ZodTypeAny} from 'zod';
+import {z} from 'zod';
 
 type AliasMap = Record<string, string>;
 
 /**
- * Creates a strict Zod object schema that:
- * 1. Accepts aliased parameter names (e.g., new_string -> new_str)
- * 2. Rejects any unknown parameters after alias resolution
+ * Creates a strict Zod object schema that rejects any unknown parameters.
+ *
+ * Parameter aliases (e.g. new_string -> new_str) are not supported with Zod 4: wrapping the object in a preprocess
+ * step hides its shape from the MCP SDK, which would then advertise the tool with no inputs. No tool uses aliases.
  */
-export function strictSchemaWithAliases<T extends ZodRawShape>(
+export function strictSchemaWithAliases<T extends z.ZodRawShape>(
 	shape: T,
 	aliases: AliasMap = {},
-): ZodTypeAny {
-	const objectSchema = z.object(shape).strict();
+): z.ZodObject<T, z.core.$strict> {
+	if (Object.keys(aliases).length > 0) {
+		throw new Error('strictSchemaWithAliases: parameter aliases are not supported');
+	}
 
-	const effectsSchema = z.preprocess((args: unknown) => {
-		if (typeof args !== 'object' || args === null) {
-			return args;
-		}
-
-		const input = args as Record<string, unknown>;
-		const result: Record<string, unknown> = {};
-
-		// Build result object, mapping aliases to canonical names
-		for (const key of Object.keys(input)) {
-			const canonicalKey = aliases[key] ?? key;
-			// Only use alias if canonical key isn't already set
-			if (!(canonicalKey in result)) {
-				result[canonicalKey] = input[key];
-			}
-		}
-
-		return result;
-	}, objectSchema);
-
-	// Expose .shape so MCP SDK's normalizeObjectSchema can find the inner schema.
-	// Without this, the SDK falls back to an empty JSON schema for ZodEffects.
-	(effectsSchema as unknown as {shape: T}).shape = objectSchema.shape;
-
-	return effectsSchema;
+	return z.strictObject(shape);
 }

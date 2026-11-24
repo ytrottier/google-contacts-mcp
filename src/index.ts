@@ -11,6 +11,9 @@ export function createServer(config: Config): McpServer {
 	const server = new McpServer({
 		name: 'google-contacts-mcp',
 		version,
+	}, {
+		// Refuse oversized tool arguments before validating them, so a huge payload can't exhaust memory
+		maxToolInputElements: 10_000,
 	});
 
 	registerAll(server, config);

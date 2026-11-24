@@ -18,8 +18,8 @@ export const outputSchema = z.object({
 			url: z.string().optional(),
 			default: z.boolean().optional(),
 		})).optional(),
-	}).passthrough().optional(),
-}).passthrough();
+	}).loose().optional(),
+}).loose();
 
 export function registerContactPhotoUpdate(server: McpServer, config: Config): void {
 	server.registerTool(

@@ -25,7 +25,7 @@ const outputSchema = z.object({
 		value: z.string().optional(),
 		type: z.string().optional(),
 	})).optional(),
-}).passthrough();
+}).loose();
 
 export function registerOtherContactCopyToContacts(server: McpServer, config: Config): void {
 	server.registerTool(
