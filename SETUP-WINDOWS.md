@@ -46,11 +46,13 @@ npm run build
 
 If PowerShell says running scripts is disabled when you type `npm`, use `npm.cmd` instead (e.g. `npm.cmd ci`).
 
-Create the folder that photos will be read from:
+Photos are read from subfolders of one top-level photo folder, here your `Pictures` folder. You name the subfolder each time you ask for a photo, for example "from jane.jpg in my contact-photos folder". Create a first subfolder:
 
 ```powershell
 mkdir "$env:USERPROFILE\Pictures\contact-photos" -Force
 ```
+
+The tool can never read anything outside the top-level folder. If you'd like your photos available from the cloud version too, you can choose a folder that Google Drive syncs instead, for example `G:\My Drive`. See `SHARING.md`.
 
 ## 3. Sign in once
 
@@ -72,14 +74,14 @@ Open the config file. The easiest way is from Claude Desktop: *Settings → Deve
 ```json
 {
   "mcpServers": {
-    "google-contacts": {
+    "Contacts (laptop)": {
       "command": "node",
       "args": ["C:\\Users\\<you>\\mcp\\google-contacts-mcp\\dist\\main.js"],
       "env": {
         "GOOGLE_CLIENT_ID": "<client id>.apps.googleusercontent.com",
         "GOOGLE_CLIENT_SECRET": "<client secret>",
         "GOOGLE_CONTACTS_TOKEN_FILE": "C:\\Users\\<you>\\AppData\\Roaming\\google-contacts-mcp\\token.json",
-        "PHOTO_DIR": "C:\\Users\\<you>\\Pictures\\contact-photos",
+        "PHOTO_ROOT": "C:\\Users\\<you>\\Pictures",
         "DISABLE_DELETE_TOOLS": "1"
       }
     }
@@ -91,10 +93,11 @@ Notes:
 
 - Backslashes in JSON paths must be doubled, as shown.
 - `GOOGLE_CONTACTS_TOKEN_FILE` is the default location written out in full. Setting it explicitly means Claude Desktop reads the same file `npm run auth` wrote, even if the Store version of Claude Desktop redirects `%APPDATA%` for its child processes.
+- `PHOTO_ROOT` is the top-level photo folder. Each request names a subfolder inside it. If you set this up earlier with `PHOTO_DIR`, that still works, but the subfolder is now named in each request.
 - `DISABLE_DELETE_TOOLS=1` hides the tools that permanently delete contacts, photos and labels.
 - **About the client secret:** under Google's model, a Desktop-app client secret is not truly secret; it ships inside installed apps. Your real credential is the refresh token in `token.json`. Still, don't share or commit this config file or `token.json`. Anyone who has both can read and edit your contacts.
 
-**Fully quit and restart Claude Desktop**: right-click the tray icon and choose *Quit*. Closing the window isn't enough. Under *Settings → Developer*, the `google-contacts` server should show as running.
+**Fully quit and restart Claude Desktop**: right-click the tray icon and choose *Quit*. Closing the window isn't enough. Under *Settings → Developer*, the `Contacts (laptop)` server should show as running.
 
 ## 5. Smoke test
 
@@ -103,14 +106,14 @@ In a new Claude chat:
 1. *"Search my Google contacts for <a colleague you know is saved>."* This should return their details.
 2. Create a throwaway contact: *"Create a contact named Test Person at company Testco with job title Tester."*
 3. *"Update only the job title of Test Person to Chief Tester."* Then check in [Google Contacts](https://contacts.google.com) that the company is still **Testco**. This is the bug fixed in `fix/partial-name-org-update`.
-4. Photo from file: save any small JPEG or PNG into `Pictures\contact-photos` as `test.jpg`. Ask *"Set Test Person's photo from the file test.jpg."*
+4. Photo from file: save any small JPEG or PNG into `Pictures\contact-photos` as `test.jpg`. Ask *"Set Test Person's photo from test.jpg in my contact-photos folder."*
 5. Delete the throwaway contact in the Google Contacts web UI, since the delete tools are disabled.
 
 Everyday uses:
 
 - *"Add the person from this email signature as a contact."*
 - *"Find <name> in my other contacts and save them to my contacts."* This uses the people you've emailed but never saved.
-- Crop a portrait from a Zoom/Teams screenshot, save it into `contact-photos`, then *"Set <name>'s photo from <file>."*
+- Crop a portrait from a Zoom/Teams screenshot, save it into `contact-photos`, then *"Set <name>'s photo from <file> in my contact-photos folder."* To avoid naming the folder each time, add a line such as "My contact photos are in the contact-photos folder" to your Claude instructions.
 
 ## 6. Recovery
 
